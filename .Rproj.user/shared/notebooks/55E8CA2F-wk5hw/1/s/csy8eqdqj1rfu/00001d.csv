@@ -1,0 +1,7 @@
+"0","tmap_mode(""view"")"
+"2","tmap mode set to interactive viewing
+"
+"0","tm_shape(giifinalmap) + "
+"0","  tm_polygons(""difference"", breaks=breaks) "
+"2","Variable(s) ""difference"" contains positive and negative values, so midpoint is set to 0. Set midpoint = NA to show the full spectrum of the color palette.
+"
