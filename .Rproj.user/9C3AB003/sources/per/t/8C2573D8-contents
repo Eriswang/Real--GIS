@@ -1,0 +1,194 @@
+---
+title: "gis_homework4"
+author: "listianingrumr"
+date: "2022-10-28"
+output: html_document
+---
+
+## Load packages
+```{r}
+library(sf)
+library(rgdal)
+library(tidyverse)
+library(tmap)
+library(tmaptools)
+library(janitor)
+```
+## Read dataset as df
+```{r}
+df <- read_delim("HDR21-22_Composite_indices_complete_time_series.csv", delim=",")
+```
+## Data cleaning and adding new Gender Inequality Index Difference between 2010 & 2019 column (gii_diff)
+```{r}
+gii <- df %>%
+  clean_names() %>%
+  select(iso3, country, gii_2010, gii_2019) %>%
+  slice(1:195) %>%
+  mutate(., gii_diff=(gii_2019-gii_2010)) %>%
+  na.omit(df)
+gii
+```
+## Read world countries spatial data (shapefile) as world
+```{r}
+world <- st_read("World_Countries_(Generalized)/World_Countries__Generalized_.shp")
+```
+## Load the countrycode package and change the countrycode so that it can be joined
+```{r}
+library(countrycode)
+gii$iso = countrycode(gii$iso3,"iso3c","iso2c")
+```
+## Join the csv data and shapefile
+```{r}
+world
+
+joined_data <- world %>% 
+  clean_names() %>%
+  left_join(., 
+            gii,
+            by = c("iso" = "iso"))
+```
+## Plot the Gender Inequality Difference 2010 & 2019 map
+```{r}
+  tm_shape(joined_data) + 
+  tm_polygons("gii_diff", 
+              style="pretty",
+              palette="Blues",
+              midpoint=NA,
+              #title="Gender Inequality Difference 2010 & 2019",
+              alpha = 0.7) + 
+  tm_compass(position = c("left", "bottom"),type = "arrow") + 
+  tm_scale_bar(position = c("left", "bottom")) +
+  tm_layout(title = "Gender Inequality Difference 2010 & 2019", legend.position = c("right", "bottom")) +
+  tmap_options(max.categories = 115)
+```
+Week5 homework
+# static map
+```{r}
+tmap_mode("plot")
+
+# set the breaks
+# for our mapped data
+breaks = c(-0.4, -0.2, -0.05, 0, 0.1) 
+
+# plot each map
+tm1 <- tm_shape(joined_data) + 
+  tm_polygons("gii_diff", 
+              breaks=breaks,
+              palette="PuBu")+
+  tm_legend(show=FALSE)+
+  tm_layout(frame=FALSE)+
+  tm_credits("(a)", position=c(0,0.85), size=1)
+
+legend <- tm_shape(joined_data) +
+    tm_polygons("gii_diff",
+                palette="PuBu") +
+    tm_scale_bar(position=c(0.2,0.04), text.size=0.6)+
+    tm_compass(north=0, position=c(0.65,0.6))+
+    tm_layout(legend.only = TRUE, legend.position=c(0.2,0.25),asp=0.1)+
+    tm_credits("(b) difference in gender inequality ", 
+               position=c(0.2,0.0), size=0.6)
+  
+t=tmap_arrange(tm1, legend, ncol=1)
+
+t
+```
+# basic interactive map
+```{r}
+tmap_mode("view")
+
+tm_shape(joined_data) + 
+  tm_polygons("gii_diff", breaks=breaks) 
+```
+# advanced interactive map
+```{r}
+# library for pop up boxes
+library(leafpop)
+library(leaflet)
+
+#remove the geometry for our pop up boxes to avoid
+popup_gii2010 <-joined_data %>%
+  st_drop_geometry()%>%
+  dplyr::select(`gii_2010`, country.x)%>%
+  popupTable()
+
+popup_gii2019 <-joined_data %>%
+  st_drop_geometry()%>%
+  dplyr::select(`gii_2019`, country.x)%>%
+  popupTable()
+
+popup_giidiff <-joined_data %>%
+  st_drop_geometry()%>%
+  dplyr::select(`gii_diff`, country.x)%>%
+  popupTable()
+
+tmap_mode("view")
+
+# set the colour palettes using our previously defined breaks
+
+breaks2=c(0,0.3,0.5,0.7,0.9,1)
+
+pal1 <- joined_data %>%
+  colorBin(palette = "YlOrRd", domain=.$`gii_2010`, bins=breaks2)
+
+pal2 <- joined_data %>%
+  colorBin(palette = "YlOrRd", domain=.$`gii_2019`, bins=breaks2)
+
+pal3 <- colorBin(palette = "YlOrRd", 
+                domain=joined_data$`gii_diff`, bins=breaks)
+
+map<- leaflet(joined_data) %>%
+  # add basemap options
+  addTiles(group = "OSM (default)") %>%
+  addProviderTiles(providers$Stamen.Toner, group = "Toner") %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite") %>%
+  addProviderTiles(providers$CartoDB.Positron, group = "CartoDB")%>%
+  
+  #add our polygons, linking to the tables we just made
+  addPolygons(color="white", 
+              weight = 2,
+              opacity = 1,
+              dashArray = "3",
+              popup = popup_gii2010,
+              fillOpacity = 0.7,
+              fillColor = ~pal1(`gii_2010`),
+              group = "gii_2010") %>%
+  
+  addPolygons(fillColor = ~pal2(`gii_2019`), 
+              weight = 2,
+              opacity = 1,
+              color = "white",
+              dashArray = "3",
+              popup = popup_gii2019,
+              fillOpacity = 0.7,
+              group = "gii_2019") %>%
+  
+  addPolygons(color="white", 
+              weight = 2,
+              opacity = 1,
+              dashArray = "3",
+              popup = popup_giidiff,
+              fillOpacity = 0.7,
+              fillColor = ~pal3(`gii_diff`),
+              group = "gii_diff") %>%
+  
+  # add a legend
+  addLegend(pal = pal3, values = ~`gii_diff`, 
+            group = c("gii_2010","gii_2019","gii_diff"), 
+            position ="bottomleft", title = "gender inequality index") %>%
+  # specify layers control
+  addLayersControl(
+    baseGroups = c("OSM (default)", "Toner", "Toner Lite", "CartoDB"),
+    overlayGroups = c("gii_2010", "gii_2019","gii_diff"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+# plot the map
+map
+```
+
+
+
+
+
+
+

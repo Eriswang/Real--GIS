@@ -1,0 +1,6 @@
+"0","Different_2010_19 <-GIIdata_2010_19 %>%"
+"0","  mutate(difference=(gii_2010 - gii_2019))%>%"
+"0","  dplyr::select(gii_2010,gii_2019,difference,"
+"0","                country)%>%"
+"0","  "
+"0","  arrange(desc(difference))"

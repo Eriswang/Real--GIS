@@ -1,0 +1,4 @@
+"0","library(countrycode)"
+"0","Different_2010_19$iso = countrycode(Different_2010_19$country,""country.name"",""iso2c"")"
+"2","Warning: Some values were not matched unambiguously: Arab States, East Asia and the Pacific, Europe and Central Asia, High human development, Latin America and the Caribbean, Low human development, Medium human development, South Asia, Sub-Saharan Africa, Very high human development, World
+"

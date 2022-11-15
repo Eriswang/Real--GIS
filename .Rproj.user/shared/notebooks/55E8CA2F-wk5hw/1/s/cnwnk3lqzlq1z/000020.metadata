@@ -1,0 +1,1 @@
+{"height":247.2187886279357,"width":400.0,"size_behavior":0,"conditions":[[1,"Warning: Breaks contains positive and negative values. Better is to use diverging scale instead, or set auto.palette.mapping to FALSE."],[0,"Scale bar set for latitude km and will be different at the top and bottom of the map.\n"]]}

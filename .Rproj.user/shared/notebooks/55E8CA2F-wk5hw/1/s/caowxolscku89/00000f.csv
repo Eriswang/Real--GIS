@@ -1,0 +1,5 @@
+"0","library(dplyr)"
+"0","GIIdata_2010_19<- GIIdata %>%"
+"0","  dplyr::select (contains(""gii_2010""),"
+"0","                contains(""gii_2019""),"
+"0","                contains(""country""))"
